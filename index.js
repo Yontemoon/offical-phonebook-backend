@@ -80,14 +80,16 @@ const generateId = () => {
     return createId + 1;
 }
 
-const checkDuplicate = (name) => {
-    const checkFilter = persons.filter(person => person.name === name);
+const checkDuplicate = (specName) => {
+    // const checkFilter = persons.filter(person => person.name === name);
+    // return checkFilter.length >= 1 ? true : false;
+    const checkFilter = Person.find({name : specName});
     return checkFilter.length >= 1 ? true : false;
 }
 
 app.post('/api/persons/', (request, response) => {
     const body = request.body
-
+    console.log(`The name: ${body.name}`)
     if (!body.name || !body.number || body.name === "" || body.number === "") {
         return response.status(400).json({
             error: 'No content'
