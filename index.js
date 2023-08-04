@@ -94,42 +94,43 @@ const checkDuplicate = (specName) => {
     return checkFilter.length >= 1 ? true : false;
 }
 
-app.post('/api/persons/', (request, response) => {
+app.post('/api/persons/', (request, response, next) => {
     const body = request.body
-    console.log(`The name: ${body.name}`)
-    if (!body.name || !body.number || body.name === undefined || body.number === undefined) {
-        return response.status(400).json({
-            error: 'No content'
-        })
-    } 
-    if (checkDuplicate(body.name) === true) {
-        return response.status(400).json( {
-            error: "name must be unique"
-        })
-    }
+    
+    // if (!body.name || !body.number || body.name === undefined || body.number === undefined) {
+    //     return response.status(400).json({
+    //         error: 'No content'
+    //     })
+    // } 
+    // if (checkDuplicate(body.name) === true) {
+    //     return response.status(400).json( {
+    //         error: "name must be unique"
+    //     })
+    
     const person = new Person({
-        // id: generateId(),
         name: body.name,
         number: body.number,
     })
     // persons = persons.concat(person)
     // response.json(persons)
-    person.save().then(savedPerson => {
-        response.json(savedPerson)
-    })
+    person.save()
+        .then(savedPerson => {
+            response.json(savedPerson)
+        })
+        .catch(error => next(error))
 })
 
 
-
+// CONFUSED BY NAME/NUMBER AND RUNVALDATOR PARTS
 app.put('/api/persons/:id', (request, response, next) => {
-    const body = request.body;
+    const {name, number} = request.body;
     
     const replacePerson = {
         name: body.name,
         number: body.number,
     }
     //confusing on "new"true
-    Person.findByIdAndUpdate(request.params.id, replacePerson, { new:true })
+    Person.findByIdAndUpdate(request.params.id, {name, number}, { new:true, runValidators:true, context: 'query' })
         .then(updatedPerson => {
             response.json(updatedPerson)
         })
@@ -145,6 +146,8 @@ const errorHandler = (error, request, response, next) => {
     console.error(error.message)
     if(error.name === "CastError") {
         return response.status(400).send({error: "malformatted id"})
+    } else if (error.name === "ValidationError") {
+        return response.status(400).json({error: error.message})
     }
     next(error)
 }
